@@ -1,21 +1,31 @@
 // src/routes/components/ProtectedRoute.tsx
-
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
+
+import { Stack, CircularProgress, Typography } from '@mui/material';
 
 import { useAuth } from 'src/context/AuthContext';
 
-// ... (resto del archivo)
-
-// 👇 Cambia esta línea para que acepte la propiedad "children"
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, loading } = useAuth();
+
+    if (loading) {
+        // Mientras validamos el token, mostramos un indicador
+        return (
+            <Stack alignItems="center" mt={8}>
+                <CircularProgress />
+                <Typography variant="body2" mt={2}>
+                    Verificando sesión...
+                </Typography>
+            </Stack>
+        );
+    }
 
     if (!isAuthenticated) {
-        // Si no está autenticado, redirige al login
+        // Si ya terminó la validación y no hay sesión, redirige al login
         return <Navigate to="/sign-in" replace />;
     }
 
-    // Si está autenticado, renderiza los componentes hijos que le pasaste
+    // Usuario autenticado, renderizamos los hijos
     return <>{children}</>;
 }

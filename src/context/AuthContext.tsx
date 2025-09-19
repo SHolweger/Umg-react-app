@@ -1,11 +1,11 @@
 // src/context/AuthContext.tsx
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
 // 1. Define la "forma" o tipo de los datos que tendrá el contexto
 interface AuthContextType {
     isAuthenticated: boolean;
     user: any;
+    loading: boolean; // <-- nuevo
     login: (username: string, password: string) => Promise<boolean>;
     logout: () => void;
 }
@@ -22,13 +22,33 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: AuthProviderProps) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true); // <-- inicializa en true
 
     // Verifica si hay token al cargar la app
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            setIsAuthenticated(true);
-            // Opcional: puedes obtener el perfil del usuario aquí
+            // Intenta obtener el perfil desde el backend
+            fetch('http://localhost:8081/api/customer/usuario/perfil', {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error('Token inválido');
+                    return res.json();
+                })
+                .then(data => {
+                    setUser(data); 
+                    setIsAuthenticated(true);
+                    setLoading(false);
+                })
+                .catch(() => {
+                    localStorage.removeItem('token');
+                    setIsAuthenticated(false);
+                    setUser(null);
+                    setLoading(false);
+                });
+        } else {
+            setLoading(false);
         }
     }, []);
 
@@ -44,7 +64,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (response.ok && data.token) {
                 localStorage.setItem('token', data.token);
                 setIsAuthenticated(true);
-                setUser(data.user || { username }); // Si el backend retorna datos del usuario
+
+                // Obtener perfil completo si el backend no lo envía en login
+                const perfilResponse = await fetch('http://localhost:8081/api/customer/usuario/perfil', {
+                    headers: { Authorization: `Bearer ${data.token}` },
+                });
+                const perfilData = await perfilResponse.json();
+                setUser(perfilData);
+
                 return true;
             }
             setIsAuthenticated(false);
@@ -64,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, user, loading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

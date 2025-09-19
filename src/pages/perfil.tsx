@@ -1,47 +1,16 @@
-// src/pages/perfil.tsx
-
-import { useEffect, useState } from 'react';
-
 import { Stack, Typography, Button, Paper, CircularProgress } from '@mui/material';
 
 import { useAuth } from 'src/context/AuthContext';
 
 export default function PerfilPage() {
-  const { isAuthenticated, logout } = useAuth();
-  const [user, setUser] = useState<any>(null);
-  const [error, setError] = useState('');
+  const { user, logout, loading } = useAuth();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setError('No autenticado');
-      return;
-    }
-    fetch('http://localhost:8081/api/customer/usuario/perfil', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.username) setUser(data);
-        else setError('Token inválido o expirado');
-      })
-      .catch(() => setError('Error al obtener perfil'));
-  }, []);
-
-  if (!isAuthenticated)
+  if (loading)
     return (
       <Stack alignItems="center" mt={8}>
-        <Typography color="error" variant="h6">
-          No tienes acceso. Inicia sesión.
-        </Typography>
-      </Stack>
-    );
-
-  if (error)
-    return (
-      <Stack alignItems="center" mt={8}>
-        <Typography color="error" variant="h6">
-          {error}
+        <CircularProgress />
+        <Typography variant="body2" mt={2}>
+          Cargando...
         </Typography>
       </Stack>
     );
@@ -49,9 +18,8 @@ export default function PerfilPage() {
   if (!user)
     return (
       <Stack alignItems="center" mt={8}>
-        <CircularProgress />
-        <Typography variant="body2" mt={2}>
-          Cargando...
+        <Typography color="error" variant="h6">
+          No estás autenticado
         </Typography>
       </Stack>
     );
