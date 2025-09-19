@@ -23,6 +23,12 @@ export const navData = [
     path: '/user',
     icon: icon('ic-user'),
   },
+  // 👇 AÑADE ESTE OBJETO PARA TU PÁGINA DE CLIENTES 👇
+  {
+    title: 'Clientes',
+    path: '/clientes',
+    icon: icon('ic-user'), // Puedes reutilizar un ícono existente
+  },
   {
     title: 'Product',
     path: '/products',
